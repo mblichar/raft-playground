@@ -7,7 +7,7 @@ import (
 
 type followerCommandHandler struct{}
 
-func (_ *followerCommandHandler) handleAppendEntries(
+func (*followerCommandHandler) handleAppendEntries(
 	state raft_state.FullStateAccessor,
 	command raft_commands.AppendEntriesCommand,
 ) raft_commands.AppendEntriesResult {
@@ -50,8 +50,10 @@ func (_ *followerCommandHandler) handleAppendEntries(
 		}
 	}
 
+	persistentState.CurrentTerm = command.Term
 	volatileState.LeaderId = command.LeaderId
 	result.Success = true
+	result.Term = persistentState.CurrentTerm
 	return result
 }
 
