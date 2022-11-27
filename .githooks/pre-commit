@@ -13,6 +13,8 @@ do
   gofmt -w $FILE
   git add $FILE
 
+  continue # only fmt for now
+  
   goimports -w $FILE
 
   golint "-set_exit_status" $FILE

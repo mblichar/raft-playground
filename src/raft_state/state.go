@@ -1,7 +1,17 @@
 package raft_state
 
+type NodeRole int
+
+const (
+	Follower NodeRole = iota
+	Leader
+	Candidate
+)
+
 // VolatileNodeState struct for volatile state kept on all nodes
 type VolatileNodeState struct {
+	// Current role of a node
+	Role NodeRole
 	// Index of highest log entry known to be committed
 	CommitIndex uint
 	// Index of highest log entry applied to state machine
@@ -34,10 +44,12 @@ type LogEntry struct {
 
 // PersistentState struct for persistent state kept on all nodes
 type PersistentState struct {
+	// Id of this node
+	NodeId uint
 	// latest term server has seen
 	CurrentTerm uint
 	// Id of candidate that received vote in current term
-	VotedFor int
+	VotedFor uint
 	// Log entries for state machine
 	Log []LogEntry
 }
