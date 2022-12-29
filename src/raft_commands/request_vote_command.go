@@ -11,11 +11,6 @@ type RequestVoteCommand struct {
 	LastLogTerm uint
 }
 
-type RequestVoteResult struct {
-	// Boolean indicating whether candidate received vote
-	VoteGranted bool
-}
-
 func (*RequestVoteCommand) CommandType() CommandType {
 	return RequestVote
 }
@@ -30,8 +25,4 @@ func (*RequestVoteCommand) ToAppendEntries() *AppendEntriesCommand {
 
 func (command *RequestVoteCommand) ToRequestVote() *RequestVoteCommand {
 	return command
-}
-
-func (*RequestVoteResult) CommandType() CommandType {
-	return RequestVote
 }

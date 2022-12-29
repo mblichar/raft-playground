@@ -8,6 +8,8 @@ const (
 	Candidate
 )
 
+const NotVoted = -1
+
 // VolatileNodeState struct for volatile state kept on all nodes
 type VolatileNodeState struct {
 	// Current role of a node
@@ -29,8 +31,18 @@ type VolatileLeaderState struct {
 }
 
 type VolatileState struct {
-	VolatileNodeState
-	VolatileLeaderState
+	// Current role of a node
+	Role NodeRole
+	// Index of highest log entry known to be committed
+	CommitIndex uint
+	// Index of highest log entry applied to state machine
+	LastApplied uint
+	// Id of current leader
+	LeaderId uint
+	// Index of the next log entry to send for given node (array index is equal to node id)
+	NextIndex []uint
+	// Index of highest log entry known to be replicated on given node (array index is equal to node id)
+	MatchIndex []uint
 }
 
 type LogEntry struct {
@@ -49,20 +61,7 @@ type PersistentState struct {
 	// latest term server has seen
 	CurrentTerm uint
 	// Id of candidate that received vote in current term
-	VotedFor uint
+	VotedFor int
 	// Log entries for state machine
 	Log []LogEntry
-}
-
-type PersistentStateAccessor interface {
-	PersistentState() *PersistentState
-}
-
-type VolatileStateAccessor interface {
-	VolatileState() *VolatileState
-}
-
-type FullStateAccessor interface {
-	PersistentStateAccessor
-	VolatileStateAccessor
 }

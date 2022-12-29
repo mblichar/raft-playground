@@ -20,13 +20,6 @@ type AppendEntriesCommand struct {
 	LeaderCommitIndex uint
 }
 
-type AppendEntriesResult struct {
-	// currentTerm of given follower, for leader to update itself
-	Term uint
-	// boolean indicating whether entry was appended
-	Success bool
-}
-
 func (*AppendEntriesCommand) CommandType() CommandType {
 	return AppendEntries
 }
@@ -41,8 +34,4 @@ func (command *AppendEntriesCommand) ToAppendEntries() *AppendEntriesCommand {
 
 func (*AppendEntriesCommand) ToRequestVote() *RequestVoteCommand {
 	return nil
-}
-
-func (*AppendEntriesResult) CommandType() CommandType {
-	return AppendEntries
 }

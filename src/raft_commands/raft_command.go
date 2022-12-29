@@ -18,7 +18,9 @@ type RaftCommand interface {
 	ToRequestVote() *RequestVoteCommand
 }
 
-type RaftCommandResult interface {
-	// CommandType returns type of command which produced a given result
-	CommandType() CommandType
+type RaftCommandResult struct {
+	// currentTerm of given follower, for leader to update itself
+	Term uint
+	// boolean indicating whether entry was appended
+	Success bool
 }

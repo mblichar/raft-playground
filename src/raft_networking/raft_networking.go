@@ -9,6 +9,6 @@ type CommandWrapper struct {
 
 type RaftNetworking interface {
 	ListenForCommands() chan CommandWrapper
-	SendAppendEntriesCommand(nodeId uint, command raft_commands.AppendEntriesCommand) (raft_commands.AppendEntriesResult, bool)
-	SendRequestVoteCommand(nodeId uint, command raft_commands.RequestVoteCommand) (raft_commands.RequestVoteResult, bool)
+	SendAppendEntriesCommand(nodeId uint, command raft_commands.AppendEntriesCommand) (raft_commands.RaftCommandResult, bool)
+	SendRequestVoteCommand(nodeId uint, command raft_commands.RequestVoteCommand) (raft_commands.RaftCommandResult, bool)
 }
