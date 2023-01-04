@@ -2,7 +2,6 @@ package node
 
 import (
 	"github.com/mblichar/raft/src/config"
-	"github.com/mblichar/raft/src/logger"
 	"github.com/mblichar/raft/src/raft_networking"
 	"github.com/mblichar/raft/src/raft_state"
 	"github.com/mblichar/raft/src/timer"
@@ -11,17 +10,12 @@ import (
 type Node struct {
 	VolatileState            raft_state.VolatileState
 	PersistentState          raft_state.PersistentState
-	raftNetworking           raft_networking.RaftNetworking
-	timer                    timer.Timer
-	logger                   logger.Logger
-	electionCancelledChannel chan interface{}
+	electionResultChannel    chan electionResult
+	electionCancelledChannel chan struct{}
 }
 
-func CreateNode(raftNetworking raft_networking.RaftNetworking, timer timer.Timer) Node {
-	node := Node{
-		raftNetworking: raftNetworking,
-		timer:          timer,
-	}
+func CreateNode() Node {
+	node := Node{}
 
 	// TODO: add init entry to log in PersistentState
 
@@ -30,32 +24,36 @@ func CreateNode(raftNetworking raft_networking.RaftNetworking, timer timer.Timer
 	return node
 }
 
-func (node *Node) Start(quit chan int) {
-	raftCommandsChannel := node.raftNetworking.ListenForCommands()
-	electionWonChannel := make(chan bool)
+func ProcessingLoop(node *Node, raftNetworking raft_networking.RaftNetworking, timeoutFactory timer.TimeoutFactory, quit chan int) {
+	raftCommandsChannel := raftNetworking.ListenForCommands()
 
 	for {
 		var timeout timer.Timeout
 		if node.VolatileState.Role == raft_state.Leader {
-			timeout = node.timer.Timeout("heartbeat", config.Config.HeartbeatTimeout)
+			timeout = timeoutFactory.Timeout("heartbeat", config.Config.HeartbeatTimeout)
 		} else {
-			timeout = node.timer.Timeout("election", config.Config.ElectionTimeout) // TODO: add randomness
+			timeout = timeoutFactory.Timeout("election", config.Config.ElectionTimeout) // TODO: add randomness
 		}
 
 		select {
 		case commandWrapper := <-raftCommandsChannel:
 			commandWrapper.Result <- handleRaftCommand(node, commandWrapper.Command)
-		case <-electionWonChannel:
-			node.VolatileState.Role = raft_state.Leader
-			sendHeartbeat(node)
+		case result := <-node.electionResultChannel:
+			cancelElection(node)
+			if result.won {
+				node.VolatileState.Role = raft_state.Leader
+				sendHeartbeat(node)
+			} else {
+				node.VolatileState.Role = raft_state.Follower
+				node.PersistentState.CurrentTerm = result.currentTerm
+			}
 		case <-timeout.Done():
 			if node.VolatileState.Role == raft_state.Leader {
 				sendHeartbeat(node)
 			} else if node.PersistentState.VotedFor == raft_state.NotVoted {
-				electionWonChannel = startNewElection(node)
+				startNewElection(node, raftNetworking, timeoutFactory)
 			}
 		case <-quit:
-			timeout.Cancel()
 			return
 		}
 	}

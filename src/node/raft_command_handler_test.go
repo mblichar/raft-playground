@@ -8,8 +8,7 @@ import (
 )
 
 func TestAppendEntriesHandling(t *testing.T) {
-
-	createNodeMock := func(term uint, commitIndex uint) *Node {
+	createNode := func(term uint, commitIndex uint) *Node {
 		return &Node{
 			PersistentState: raft_state.PersistentState{
 				CurrentTerm: term,
@@ -38,7 +37,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	}
 
 	t.Run("returns success: false when command term < state current term", func(t *testing.T) {
-		node := createNodeMock(2, 0)
+		node := createNode(2, 0)
 		command := raft_commands.AppendEntriesCommand{Term: 1}
 
 		result := handleRaftCommand(node, &command)
@@ -47,7 +46,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	})
 
 	t.Run("returns success: false when no log entry matching command prev log index", func(t *testing.T) {
-		node := createNodeMock(2, 2)
+		node := createNode(2, 2)
 		node.PersistentState.Log = []raft_state.LogEntry{
 			{Index: 1},
 			{Index: 2},
@@ -60,7 +59,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	})
 
 	t.Run("returns success: false when prev log index entry exist but with wrong term", func(t *testing.T) {
-		node := createNodeMock(2, 2)
+		node := createNode(2, 2)
 		node.PersistentState.Log = []raft_state.LogEntry{
 			{Index: 1},
 			{Index: 2, Term: 1},
@@ -73,7 +72,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	})
 
 	t.Run("appends new entries when prev entry matches", func(t *testing.T) {
-		node := createNodeMock(2, 2)
+		node := createNode(2, 2)
 		node.PersistentState.Log = []raft_state.LogEntry{
 			{Index: 1, Term: 1, Command: "a"},
 			{Index: 2, Term: 2, Command: "b"},
@@ -95,7 +94,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	})
 
 	t.Run("appends only new entries", func(t *testing.T) {
-		node := createNodeMock(2, 3)
+		node := createNode(2, 3)
 		node.PersistentState.Log = []raft_state.LogEntry{
 			{Index: 1, Term: 1, Command: "a"},
 			{Index: 2, Term: 2, Command: "b"},
@@ -118,7 +117,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	})
 
 	t.Run("removes conflicting entries", func(t *testing.T) {
-		node := createNodeMock(3, 1)
+		node := createNode(3, 1)
 		node.PersistentState.Log = []raft_state.LogEntry{
 			{Index: 1, Term: 1, Command: "a"},
 			{Index: 2, Term: 3, Command: "b"},
@@ -140,7 +139,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	})
 
 	t.Run("updates commit index to leader commit index when leader's committed entry in log", func(t *testing.T) {
-		node := createNodeMock(1, 2)
+		node := createNode(1, 2)
 		node.PersistentState.Log = []raft_state.LogEntry{
 			{Index: 1, Term: 1, Command: "a"},
 			{Index: 2, Term: 1, Command: "b"},
@@ -173,7 +172,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 	})
 
 	t.Run("updates commit index to last entry index when leader's committed entry not in log", func(t *testing.T) {
-		node := createNodeMock(1, 2)
+		node := createNode(1, 2)
 		node.PersistentState.Log = []raft_state.LogEntry{
 			{Index: 1, Term: 1, Command: "a"},
 			{Index: 2, Term: 1, Command: "b"},

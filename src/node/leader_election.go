@@ -3,12 +3,23 @@ package node
 import (
 	"github.com/mblichar/raft/src/config"
 	"github.com/mblichar/raft/src/raft_commands"
+	"github.com/mblichar/raft/src/raft_networking"
 	"github.com/mblichar/raft/src/raft_state"
+	"github.com/mblichar/raft/src/timer"
 )
 
-func startNewElection(node *Node) chan bool {
+type electionResult struct {
+	// indicates whether node won the election or not
+	won bool
+	// when won equals false, indicates the current term received from other nodes
+	currentTerm uint
+}
+
+func startNewElection(node *Node, raftNetworking raft_networking.RaftNetworking, timeoutFactory timer.TimeoutFactory) {
 	cancelElection(node)
-	electionCancelledChannel := make(chan interface{})
+	electionResultChannel := make(chan electionResult)
+	electionCancelledChannel := make(chan struct{})
+	node.electionResultChannel = electionResultChannel
 	node.electionCancelledChannel = electionCancelledChannel
 
 	node.VolatileState.Role = raft_state.Candidate
@@ -17,26 +28,27 @@ func startNewElection(node *Node) chan bool {
 
 	requiredVotes := len(config.Config.RaftNodesIds)/2 + 1
 	receivedVotes := 1 // candidate voted for itself
+	currentTerm := node.PersistentState.CurrentTerm
 
-	results := sendRequestVoteCommands(node, electionCancelledChannel)
+	results := sendRequestVoteCommands(node, electionCancelledChannel, raftNetworking, timeoutFactory)
 
-	electionWonChannel := make(chan bool)
 	go func() {
 		for receivedVotes < requiredVotes {
 			select {
 			case result := <-results:
 				if result.Success {
 					receivedVotes++
+				} else if result.Term > currentTerm {
+					electionResultChannel <- electionResult{won: false, currentTerm: result.Term}
+					return
 				}
 			case <-electionCancelledChannel:
 				return
 			}
 		}
 
-		electionWonChannel <- true
+		electionResultChannel <- electionResult{won: true}
 	}()
-
-	return electionWonChannel
 }
 
 func cancelElection(node *Node) {
@@ -46,7 +58,12 @@ func cancelElection(node *Node) {
 	}
 }
 
-func sendRequestVoteCommands(node *Node, electionCancelledChannel chan interface{}) <-chan raft_commands.RaftCommandResult {
+func sendRequestVoteCommands(
+	node *Node,
+	electionCancelledChannel chan struct{},
+	raftNetworking raft_networking.RaftNetworking,
+	timeoutFactory timer.TimeoutFactory,
+) <-chan raft_commands.RaftCommandResult {
 	currentTerm := node.PersistentState.CurrentTerm
 	currentNodeId := node.PersistentState.NodeId
 	nodesCount := len(config.Config.RaftNodesIds)
@@ -69,7 +86,7 @@ func sendRequestVoteCommands(node *Node, electionCancelledChannel chan interface
 	for i := 0; i < nodesCount; i++ {
 		if nodeId := config.Config.RaftNodesIds[i]; nodeId != currentNodeId {
 			sendCommand := func() bool {
-				result, err := node.raftNetworking.SendRequestVoteCommand(nodeId, command)
+				result, err := raftNetworking.SendRequestVoteCommand(nodeId, command)
 				if !err {
 					results <- result
 					return true
@@ -83,14 +100,16 @@ func sendRequestVoteCommands(node *Node, electionCancelledChannel chan interface
 					return
 				}
 
-				timeout := node.timer.Timeout("request-vote-retry", config.Config.RetryTimeout)
-				select {
-				case <-timeout.Done():
-					if sendCommand() {
+				for {
+					timeout := timeoutFactory.Timeout("request-vote-retry", config.Config.RetryTimeout)
+					select {
+					case <-timeout.Done():
+						if sendCommand() {
+							return
+						}
+					case <-electionCancelledChannel:
 						return
 					}
-				case <-electionCancelledChannel:
-					return
 				}
 			}()
 		}
