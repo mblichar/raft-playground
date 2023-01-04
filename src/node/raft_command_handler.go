@@ -8,6 +8,9 @@ import (
 
 func handleRaftCommand(node *Node, command raft_commands.RaftCommand) raft_commands.RaftCommandResult {
 	commandTerm := command.CommandTerm()
+
+	node.stateMutex.Lock()
+	defer node.stateMutex.Unlock()
 	currentTerm := node.PersistentState.CurrentTerm
 
 	if commandTerm < currentTerm {

@@ -22,17 +22,17 @@ func TestAppendEntriesHandling(t *testing.T) {
 
 	assertResult := func(t *testing.T, result raft_commands.RaftCommandResult, expectedSuccess bool, expectedTerm uint) {
 		if result.Success != expectedSuccess {
-			t.Fatalf("expected success to be %t, got %t", expectedSuccess, result.Success)
+			t.Errorf("expected success to be %t, got %t", expectedSuccess, result.Success)
 		}
 
 		if result.Term != expectedTerm {
-			t.Fatalf("expected result term to be %d, got %d", expectedTerm, result.Term)
+			t.Errorf("expected result term to be %d, got %d", expectedTerm, result.Term)
 		}
 	}
 
 	assertLogEntries := func(t *testing.T, logEntries []raft_state.LogEntry, expectedLogEntries []raft_state.LogEntry) {
 		if diff := deep.Equal(logEntries, expectedLogEntries); diff != nil {
-			t.Fatalf("expected log entries to match, got the following differences %s", diff)
+			t.Errorf("expected log entries to match, got the following differences %s", diff)
 		}
 	}
 
@@ -167,7 +167,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 			{Index: 4, Term: 2, Command: "d"},
 		})
 		if node.VolatileState.CommitIndex != leaderCommitIndex {
-			t.Fatalf("expected commit index to equal %d, got %d", leaderCommitIndex, node.VolatileState.CommitIndex)
+			t.Errorf("expected commit index to equal %d, got %d", leaderCommitIndex, node.VolatileState.CommitIndex)
 		}
 	})
 
@@ -201,7 +201,7 @@ func TestAppendEntriesHandling(t *testing.T) {
 			{Index: lastEntryIndex, Term: 2, Command: "d"},
 		})
 		if node.VolatileState.CommitIndex != lastEntryIndex {
-			t.Fatalf("expected commit index to equal %d, got %d", lastEntryIndex, node.VolatileState.CommitIndex)
+			t.Errorf("expected commit index to equal %d, got %d", lastEntryIndex, node.VolatileState.CommitIndex)
 		}
 	})
 }

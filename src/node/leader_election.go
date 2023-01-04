@@ -16,6 +16,7 @@ type electionResult struct {
 }
 
 func startNewElection(node *Node, raftNetworking raft_networking.RaftNetworking, timeoutFactory timer.TimeoutFactory) {
+	node.stateMutex.Lock()
 	cancelElection(node)
 	electionResultChannel := make(chan electionResult)
 	electionCancelledChannel := make(chan struct{})
@@ -31,6 +32,7 @@ func startNewElection(node *Node, raftNetworking raft_networking.RaftNetworking,
 	currentTerm := node.PersistentState.CurrentTerm
 
 	results := sendRequestVoteCommands(node, electionCancelledChannel, raftNetworking, timeoutFactory)
+	node.stateMutex.Unlock()
 
 	go func() {
 		for receivedVotes < requiredVotes {
@@ -47,7 +49,7 @@ func startNewElection(node *Node, raftNetworking raft_networking.RaftNetworking,
 			}
 		}
 
-		electionResultChannel <- electionResult{won: true}
+		electionResultChannel <- electionResult{won: true, currentTerm: currentTerm}
 	}()
 }
 
@@ -83,8 +85,9 @@ func sendRequestVoteCommands(
 		LastLogTerm:  lastLogTerm,
 	}
 
-	for i := 0; i < nodesCount; i++ {
-		if nodeId := config.Config.RaftNodesIds[i]; nodeId != currentNodeId {
+	for _, val := range config.Config.RaftNodesIds {
+		nodeId := val
+		if nodeId != currentNodeId {
 			sendCommand := func() bool {
 				result, err := raftNetworking.SendRequestVoteCommand(nodeId, command)
 				if !err {

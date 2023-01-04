@@ -13,19 +13,8 @@ func createNetworkingMockWithResponses(responses nodeResponseMocks) *raftNetwork
 	return &raftNetworkingMock{requestVoteResponses: responses}
 }
 
-func createNetworkingMockWithResponse(response responseMock) raftNetworkingMock {
-	return raftNetworkingMock{requestVoteDefaultResponse: &response}
-}
-
 func createFailingNetworkingMock() *raftNetworkingMock {
 	return &raftNetworkingMock{requestVoteDefaultResponse: &responseMock{err: true}}
-}
-
-func createSuccessNetworkingMock() *raftNetworkingMock {
-	return &raftNetworkingMock{requestVoteDefaultResponse: &responseMock{
-		err:    false,
-		result: raft_commands.RaftCommandResult{Success: true},
-	}}
 }
 
 func createNode() *Node {
@@ -46,7 +35,7 @@ func createNode() *Node {
 func assertChannelClosed(t *testing.T, channel chan struct{}) {
 	select {
 	case <-time.After(time.Second):
-		t.Fatalf("expected channel to be closed but it isn't")
+		t.Errorf("expected channel to be closed but it isn't")
 	case <-channel:
 		return
 	}
@@ -54,17 +43,17 @@ func assertChannelClosed(t *testing.T, channel chan struct{}) {
 
 func assertSentCommands(t *testing.T, sentCommands sentRequestVoteCommands, expectedCommands sentRequestVoteCommands) {
 	if diff := deep.Equal(sentCommands, expectedCommands); diff != nil {
-		t.Fatalf("expected sent commands to match, got the follwoing differences %s", diff)
+		t.Errorf("expected sent commands to match, got the follwoing differences %s", diff)
 	}
 }
 
 func assertRetryTimeout(t *testing.T, timeout *timeoutMock) {
 	if timeout.kind != "request-vote-retry" {
-		t.Fatalf("expected timeout kind to equal request-vote-retry, got %s", timeout.kind)
+		t.Errorf("expected timeout kind to equal request-vote-retry, got %s", timeout.kind)
 	}
 
 	if timeout.milliseconds != config.Config.RetryTimeout {
-		t.Fatalf("expected timeout milliseconds to equal request-vote-retry, got %d", timeout.milliseconds)
+		t.Errorf("expected timeout milliseconds to equal request-vote-retry, got %d", timeout.milliseconds)
 	}
 }
 
@@ -80,11 +69,11 @@ func TestLeaderElection(t *testing.T) {
 		startNewElection(node, createFailingNetworkingMock(), &timeoutFactoryMock{})
 
 		if prevElectionResultChannel == node.electionResultChannel {
-			t.Fatalf("expected electionResultChanel to change")
+			t.Errorf("expected electionResultChanel to change")
 		}
 
 		if prevElectionCancelledChannel == node.electionCancelledChannel {
-			t.Fatalf("expected electionCancelledChanel to change")
+			t.Errorf("expected electionCancelledChanel to change")
 		}
 
 		assertChannelClosed(t, prevElectionCancelledChannel)
@@ -99,11 +88,11 @@ func TestLeaderElection(t *testing.T) {
 		startNewElection(node, createFailingNetworkingMock(), &timeoutFactoryMock{})
 
 		if node.electionResultChannel == nil {
-			t.Fatalf("expected electionResultChanel to be set")
+			t.Errorf("expected electionResultChanel to be set")
 		}
 
 		if node.electionCancelledChannel == nil {
-			t.Fatalf("expected electionCancelledChanel to be set")
+			t.Errorf("expected electionCancelledChanel to be set")
 		}
 
 		close(node.electionCancelledChannel)
@@ -218,7 +207,7 @@ func TestLeaderElection(t *testing.T) {
 
 		electionResult := <-node.electionResultChannel
 		if !electionResult.won {
-			t.Fatal("expected electionResult.won to be true, got false")
+			t.Error("expected electionResult.won to be true, got false")
 		}
 	})
 
@@ -238,11 +227,11 @@ func TestLeaderElection(t *testing.T) {
 
 		electionResult := <-node.electionResultChannel
 		if electionResult.won {
-			t.Fatal("expected electionResult.won to be false, got true")
+			t.Error("expected electionResult.won to be false, got true")
 		}
 
 		if electionResult.currentTerm != higherTerm {
-			t.Fatalf("expected electionResult.current term to be %d, got %d", higherTerm, electionResult.currentTerm)
+			t.Errorf("expected electionResult.current term to be %d, got %d", higherTerm, electionResult.currentTerm)
 		}
 	})
 }
