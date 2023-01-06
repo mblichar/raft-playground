@@ -132,13 +132,13 @@ func replicateLogEntry(
 	timeoutFactory timer.TimeoutFactory,
 	appendEntriesCommand raft_commands.AppendEntriesCommand,
 ) bool {
-	nodesCount := len(config.Config.RaftNodesIds)
+	nodesCount := len(config.Config.NodeIds)
 	requiredReplications := nodesCount/2 + 1
 	replications := 1
 
 	// buffered channel with len equal to nodes count - 1 to avoid goroutine leaks
-	results := make(chan bool, len(config.Config.RaftNodesIds)-1)
-	for _, nodeId := range config.Config.RaftNodesIds {
+	results := make(chan bool, len(config.Config.NodeIds)-1)
+	for _, nodeId := range config.Config.NodeIds {
 		if nodeId != node.PersistentState.NodeId {
 			go func() {
 				results <- sendAppendEntriesCommand(

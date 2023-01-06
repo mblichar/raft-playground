@@ -29,7 +29,7 @@ type raftNetworkingMock struct {
 	sentAppendEntriesCommand     chan raft_commands.AppendEntriesCommand
 }
 
-func (_ *raftNetworkingMock) ListenForCommands() chan raft_networking.CommandWrapper {
+func (_ *raftNetworkingMock) ListenForRaftCommands() chan raft_networking.CommandWrapper {
 	return nil
 }
 

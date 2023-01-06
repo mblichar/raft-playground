@@ -11,6 +11,6 @@ type CommandResult struct {
 }
 
 type ClientNetworking interface {
-	ListenForCommands() chan CommandWrapper
+	ListenForClientCommands() chan CommandWrapper
 	SendCommand(nodeId uint, command string) (CommandResult, bool)
 }

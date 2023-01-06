@@ -2,13 +2,15 @@ package config
 
 type config struct {
 	// Election timeout in milliseconds
-	ElectionTimeout uint
+	ElectionTimeout int
 	// Leader heartbeat timeout in milliseconds
-	HeartbeatTimeout uint
+	HeartbeatTimeout int
 	// Network call retry timeout in milliseconds
-	RetryTimeout uint
+	RetryTimeout int
+	// Network latency in milliseconds
+	NetworkLatency int
 	// Array of raft nodes ids
-	RaftNodesIds []uint
+	NodeIds []uint
 }
 
 var Config = config{}

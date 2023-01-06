@@ -24,6 +24,10 @@ func (*AppendEntriesCommand) CommandType() CommandType {
 	return AppendEntries
 }
 
+func (*AppendEntriesCommand) CommandTypeString() string {
+	return "AppendEntries"
+}
+
 func (command *AppendEntriesCommand) CommandTerm() uint {
 	return command.Term
 }

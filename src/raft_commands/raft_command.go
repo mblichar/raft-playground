@@ -10,6 +10,8 @@ const (
 type RaftCommand interface {
 	// CommandType returns type of given command
 	CommandType() CommandType
+	// CommandTypeString returns type of given command as string
+	CommandTypeString() string
 	// CommandTerm returns term of command sender
 	CommandTerm() uint
 	// ToAppendEntries returns pointer to AppendEntriesCommand or nil if given command is of other type

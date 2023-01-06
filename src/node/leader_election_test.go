@@ -58,7 +58,7 @@ func assertRetryTimeout(t *testing.T, timeout *timeoutMock) {
 }
 
 func TestLeaderElection(t *testing.T) {
-	config.Config.RaftNodesIds = []uint{1, 2, 3}
+	config.Config.NodeIds = []uint{1, 2, 3}
 	config.Config.RetryTimeout = 1337
 
 	t.Run("cancels previous election", func(t *testing.T) {
@@ -120,7 +120,7 @@ func TestLeaderElection(t *testing.T) {
 		startNewElection(node, networkingMock, &factoryMock)
 
 		// all network calls are failing, wait for retry timeouts which created after command is sent to each node
-		for i := 0; i < len(config.Config.RaftNodesIds)-1; i++ {
+		for i := 0; i < len(config.Config.NodeIds)-1; i++ {
 			<-factoryMock.timeoutCreated
 		}
 

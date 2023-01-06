@@ -15,6 +15,10 @@ func (*RequestVoteCommand) CommandType() CommandType {
 	return RequestVote
 }
 
+func (*RequestVoteCommand) CommandTypeString() string {
+	return "RequestVote"
+}
+
 func (command *RequestVoteCommand) CommandTerm() uint {
 	return command.Term
 }

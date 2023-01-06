@@ -39,10 +39,6 @@ type VolatileState struct {
 	LastApplied uint
 	// Id of current leader
 	LeaderId uint
-	// Index of the next log entry to send for given node (array index is equal to node id)
-	NextIndex []uint
-	// Index of highest log entry known to be replicated on given node (array index is equal to node id)
-	MatchIndex []uint
 }
 
 type LogEntry struct {

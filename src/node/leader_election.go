@@ -27,7 +27,7 @@ func startNewElection(node *Node, raftNetworking raft_networking.RaftNetworking,
 	node.PersistentState.CurrentTerm++
 	node.PersistentState.VotedFor = int(node.PersistentState.NodeId)
 
-	requiredVotes := len(config.Config.RaftNodesIds)/2 + 1
+	requiredVotes := len(config.Config.NodeIds)/2 + 1
 	receivedVotes := 1 // candidate voted for itself
 	currentTerm := node.PersistentState.CurrentTerm
 
@@ -68,7 +68,7 @@ func sendRequestVoteCommands(
 ) <-chan raft_commands.RaftCommandResult {
 	currentTerm := node.PersistentState.CurrentTerm
 	currentNodeId := node.PersistentState.NodeId
-	nodesCount := len(config.Config.RaftNodesIds)
+	nodesCount := len(config.Config.NodeIds)
 
 	var lastLogIndex, lastLogTerm uint
 	lastLogEntry := node.PersistentState.Log[len(node.PersistentState.Log)-1]
@@ -85,7 +85,7 @@ func sendRequestVoteCommands(
 		LastLogTerm:  lastLogTerm,
 	}
 
-	for _, val := range config.Config.RaftNodesIds {
+	for _, val := range config.Config.NodeIds {
 		nodeId := val
 		if nodeId != currentNodeId {
 			sendCommand := func() bool {

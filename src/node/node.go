@@ -1,11 +1,14 @@
 package node
 
 import (
+	"fmt"
 	"github.com/mblichar/raft/src/client_networking"
 	"github.com/mblichar/raft/src/config"
+	"github.com/mblichar/raft/src/logging"
 	"github.com/mblichar/raft/src/raft_networking"
 	"github.com/mblichar/raft/src/raft_state"
 	"github.com/mblichar/raft/src/timer"
+	"math/rand"
 	"sync"
 )
 
@@ -18,55 +21,62 @@ type Node struct {
 	stateMutex               sync.Mutex
 }
 
-func CreateNode() *Node {
+func CreateNode(nodeId uint) *Node {
 	node := Node{}
 
-	// TODO: add init entry to log in PersistentState
-
+	node.PersistentState.NodeId = nodeId
+	node.PersistentState.VotedFor = raft_state.NotVoted
+	node.PersistentState.Log = []raft_state.LogEntry{{Index: 0, Term: 0, Command: ""}}
 	node.VolatileState.Role = raft_state.Follower
 	node.ApplicationDatabase = make(map[string]string)
 
 	return &node
 }
 
-func ProcessingLoop(
+func StartProcessingLoop(
 	node *Node,
 	raftNetworking raft_networking.RaftNetworking,
 	clientNetworking client_networking.ClientNetworking,
 	timeoutFactory timer.TimeoutFactory,
-	quit chan int,
+	logger *logging.Logger,
+	quit chan struct{},
 ) {
-	raftCommandsChannel := raftNetworking.ListenForCommands()
-	clientCommandsChannel := clientNetworking.ListenForCommands()
+	raftCommandsChannel := raftNetworking.ListenForRaftCommands()
+	clientCommandsChannel := clientNetworking.ListenForClientCommands()
 
 	for {
 		var timeout timer.Timeout
 		if node.VolatileState.Role == raft_state.Leader {
 			timeout = timeoutFactory.Timeout("heartbeat", config.Config.HeartbeatTimeout)
 		} else {
-			timeout = timeoutFactory.Timeout("election", config.Config.ElectionTimeout) // TODO: add randomness
+			timeout = timeoutFactory.Timeout("election",
+				config.Config.ElectionTimeout+rand.Intn(int(config.Config.ElectionTimeout)/2))
 		}
 
 		select {
 		case commandWrapper := <-clientCommandsChannel:
+			logger.Log("Received client command")
 			handleClientCommand(node, raftNetworking, clientNetworking, timeoutFactory, commandWrapper)
 		case commandWrapper := <-raftCommandsChannel:
+			logger.Log(fmt.Sprintf("Received %s command", commandWrapper.Command.CommandTypeString()))
 			commandWrapper.Result <- handleRaftCommand(node, commandWrapper.Command)
 		case result := <-node.electionResultChannel:
 			node.stateMutex.Lock()
 			cancelElection(node)
-			if node.VolatileState.Role != raft_state.Leader {
+			if node.VolatileState.Role != raft_state.Candidate {
 				// ignore election if state changed in some other way before getting it's result
 				node.stateMutex.Unlock()
 				continue
 			}
 
 			if result.won {
+				logger.Log("Won election")
 				if result.currentTerm == node.PersistentState.CurrentTerm {
 					node.VolatileState.Role = raft_state.Leader
 					go sendHeartbeat(node, raftNetworking, timeoutFactory)
 				}
 			} else {
+				logger.Log("Lost election")
 				node.VolatileState.Role = raft_state.Follower
 				if result.currentTerm > node.PersistentState.CurrentTerm {
 					node.PersistentState.VotedFor = raft_state.NotVoted
@@ -76,8 +86,10 @@ func ProcessingLoop(
 			node.stateMutex.Unlock()
 		case <-timeout.Done():
 			if node.VolatileState.Role == raft_state.Leader {
+				logger.Log("Heartbeat timeout")
 				go sendHeartbeat(node, raftNetworking, timeoutFactory)
-			} else if node.PersistentState.VotedFor == raft_state.NotVoted {
+			} else {
+				logger.Log("Election timeout")
 				startNewElection(node, raftNetworking, timeoutFactory)
 			}
 		case <-quit:
