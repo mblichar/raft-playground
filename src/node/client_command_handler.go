@@ -1,6 +1,7 @@
 package node
 
 import (
+	"fmt"
 	"github.com/mblichar/raft/src/client_networking"
 	"github.com/mblichar/raft/src/config"
 	"github.com/mblichar/raft/src/raft_commands"
@@ -18,7 +19,10 @@ func handleClientCommand(
 ) {
 	command := commandWrapper.Command
 	if !isValidCommand(command) {
-		commandWrapper.Result <- client_networking.CommandResult{Result: "Invalid command", Success: false}
+		commandWrapper.Result <- client_networking.CommandResult{
+			Result:  fmt.Sprintf("'%s' - invalid command", command),
+			Success: false,
+		}
 		return
 	}
 
@@ -77,24 +81,7 @@ func handleWriteClientCommand(
 		if commandReplicated {
 			// apply all not-applied entries up to the one that was just replicated
 			node.stateMutex.Lock()
-			log := node.PersistentState.Log
-			var startIdx int
-			for i := len(log) - 1; i >= 0; i-- {
-				if log[i].Index == node.VolatileState.LastApplied {
-					startIdx = i + 1
-				}
-			}
-
-			if startIdx == 0 {
-				panic(any("should not happen - wasn't able to find start entry for applying"))
-			}
-
-			for i := startIdx; i < len(log); i++ {
-				entry := log[i]
-				if entry.Index <= newLogEntry.Index {
-					executeWriteCommand(node, entry.Command)
-				}
-			}
+			applyLogEntries(node, node.VolatileState.LastApplied, newLogEntry.Index)
 
 			node.VolatileState.CommitIndex = newLogEntry.Index
 			node.VolatileState.LastApplied = newLogEntry.Index
@@ -140,10 +127,11 @@ func replicateLogEntry(
 	results := make(chan bool, len(config.Config.NodeIds)-1)
 	for _, nodeId := range config.Config.NodeIds {
 		if nodeId != node.PersistentState.NodeId {
+			receiverId := nodeId // create local copy for goroutine
 			go func() {
 				results <- sendAppendEntriesCommand(
 					node,
-					nodeId,
+					receiverId,
 					raftNetworking,
 					timeoutFactory,
 					appendEntriesCommand,
@@ -212,6 +200,12 @@ func sendAppendEntriesCommand(
 				return true
 			}
 
+			entryToInclude, err := findEntry(node.PersistentState.Log, command.PrevLogIndex)
+			if err {
+				// should not happen, all nodes share initial log entry
+				panic(any("Should not happen - wasn't able to find entry to include"))
+			}
+
 			newPrevEntry, err := findPrevEntry(node.PersistentState.Log, command.PrevLogIndex)
 			if err {
 				// should not happen, all nodes share initial log entry
@@ -224,7 +218,7 @@ func sendAppendEntriesCommand(
 				PrevLogIndex:      newPrevEntry.Index,
 				PrevLogTerm:       newPrevEntry.Term,
 				LeaderCommitIndex: command.LeaderCommitIndex,
-				Entries:           append([]raft_state.LogEntry{newPrevEntry}, command.Entries...),
+				Entries:           append([]raft_state.LogEntry{entryToInclude}, command.Entries...),
 			}
 			node.stateMutex.Unlock()
 		}
@@ -246,6 +240,16 @@ func findPrevEntry(log []raft_state.LogEntry, index uint) (raft_state.LogEntry, 
 	for i := len(log) - 1; i > 0; i-- {
 		if log[i].Index == index {
 			return log[i-1], false
+		}
+	}
+
+	return raft_state.LogEntry{}, true
+}
+
+func findEntry(log []raft_state.LogEntry, index uint) (raft_state.LogEntry, bool) {
+	for i := len(log) - 1; i > 0; i-- {
+		if log[i].Index == index {
+			return log[i], false
 		}
 	}
 

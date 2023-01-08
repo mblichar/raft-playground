@@ -55,7 +55,7 @@ func executeWriteCommand(node *Node, command string) {
 		if _, ok := node.ApplicationDatabase[key]; ok {
 			delete(node.ApplicationDatabase, key)
 		}
+	default:
+		panic(any(fmt.Sprintf("should not happen - unknown write command: %s", command)))
 	}
-
-	panic(any(fmt.Sprintf("should not happen - unknown write command: %s", command)))
 }

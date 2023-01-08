@@ -103,6 +103,8 @@ func handleAppendEntries(
 			} else {
 				volatileState.CommitIndex = lastEntry.Index
 			}
+			applyLogEntries(node, volatileState.LastApplied, volatileState.CommitIndex)
+			volatileState.LastApplied = volatileState.CommitIndex
 		}
 	}
 
@@ -111,6 +113,27 @@ func handleAppendEntries(
 	result.Success = true
 	result.Term = persistentState.CurrentTerm
 	return result
+}
+
+func applyLogEntries(node *Node, lastApplied uint, commitIndex uint) {
+	log := node.PersistentState.Log
+	var startIdx int
+	for i := len(log) - 1; i >= 0; i-- {
+		if log[i].Index == lastApplied {
+			startIdx = i + 1
+		}
+	}
+
+	if startIdx == 0 {
+		panic(any("should not happen - wasn't able to find start entry for applying"))
+	}
+
+	for i := startIdx; i < len(log); i++ {
+		entry := log[i]
+		if entry.Index <= commitIndex {
+			executeWriteCommand(node, entry.Command)
+		}
+	}
 }
 
 func findEntryWithIndex(entries []raft_state.LogEntry, index uint) (*raft_state.LogEntry, int) {

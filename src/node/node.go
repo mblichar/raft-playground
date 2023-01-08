@@ -33,6 +33,15 @@ func CreateNode(nodeId uint) *Node {
 	return &node
 }
 
+func (node *Node) RestartNode() {
+	node.stateMutex.Lock()
+	node.VolatileState = raft_state.VolatileState{
+		Role: raft_state.Follower,
+	}
+	node.ApplicationDatabase = make(map[string]string)
+	node.stateMutex.Unlock()
+}
+
 func StartProcessingLoop(
 	node *Node,
 	raftNetworking raft_networking.RaftNetworking,
