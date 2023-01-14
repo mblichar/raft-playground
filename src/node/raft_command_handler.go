@@ -95,17 +95,17 @@ func handleAppendEntries(
 				persistentState.Log[indexInLog] = command.Entries[i]
 			}
 		}
+	}
 
-		if command.LeaderCommitIndex > volatileState.CommitIndex {
-			lastEntry := command.Entries[len(command.Entries)-1]
-			if command.LeaderCommitIndex < lastEntry.Index {
-				volatileState.CommitIndex = command.LeaderCommitIndex
-			} else {
-				volatileState.CommitIndex = lastEntry.Index
-			}
-			applyLogEntries(node, volatileState.LastApplied, volatileState.CommitIndex)
-			volatileState.LastApplied = volatileState.CommitIndex
+	if command.LeaderCommitIndex > volatileState.CommitIndex {
+		lastEntry := persistentState.Log[len(persistentState.Log)-1]
+		if command.LeaderCommitIndex < lastEntry.Index {
+			volatileState.CommitIndex = command.LeaderCommitIndex
+		} else {
+			volatileState.CommitIndex = lastEntry.Index
 		}
+		applyLogEntries(node, volatileState.LastApplied, volatileState.CommitIndex)
+		volatileState.LastApplied = volatileState.CommitIndex
 	}
 
 	persistentState.CurrentTerm = command.Term

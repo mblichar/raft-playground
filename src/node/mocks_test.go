@@ -113,12 +113,12 @@ type timeoutFactoryMock struct {
 
 type timeoutMock struct {
 	kind         string
-	milliseconds uint
+	milliseconds int
 	done         chan struct{}
 	doneCalled   chan struct{}
 }
 
-func (mock *timeoutFactoryMock) Timeout(kind string, milliseconds uint) timer.Timeout {
+func (mock *timeoutFactoryMock) Timeout(kind string, milliseconds int) timer.Timeout {
 	timeout := timeoutMock{
 		kind:         kind,
 		milliseconds: milliseconds,

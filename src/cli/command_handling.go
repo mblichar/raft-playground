@@ -144,6 +144,10 @@ func logHelp(logger *logging.Logger) {
 	logger.LogMultiple([]string{
 		"Available commands:",
 		"client [NODE_ID[] [COMMAND[] (e.g. client 2 set x 3) - sends client command to given node",
+		"                           Available commands: ",
+		"                            * set key value",
+		"                            * get key",
+		"                            * del key",
 		"node-restart [NODE_ID[] (e.g. node-restart 2) - restarts given node (clears volatile state)",
 		"network-latency[TIMEOUT[] (e.g. network-latency 2000) - sets network latency (in milliseconds)",
 		"network-splits [SPLITS[] (e.g network-splits 1,2,3 4,5) - splits nodes into sets that can communicate only",

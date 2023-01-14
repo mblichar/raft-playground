@@ -120,7 +120,7 @@ func logRaftCommand(logger *logging.Logger, senderId uint, receiverId uint, comm
 					prefix, c.Term, c.LeaderId, c.PrevLogIndex, c.PrevLogTerm, logEntriesToString(c.Entries), c.LeaderCommitIndex),
 			)
 		} else {
-			logger.Log(fmt.Sprintf("%s failed to send AppendEntries - node unreachable", prefix))
+			// do not log to avoid spamming
 		}
 	case raft_commands.RequestVote:
 		c := command.ToRequestVote()
@@ -131,7 +131,7 @@ func logRaftCommand(logger *logging.Logger, senderId uint, receiverId uint, comm
 					prefix, c.Term, c.CandidateId, c.LastLogIndex, c.LastLogTerm),
 			)
 		} else {
-			logger.Log(fmt.Sprintf("%s failed to send RequestVote - node unreachable", prefix))
+			// do not log to avoid spamming
 		}
 	}
 }

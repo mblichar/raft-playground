@@ -82,6 +82,7 @@ func StartProcessingLoop(
 				logger.Log("Won election")
 				if result.currentTerm == node.PersistentState.CurrentTerm {
 					node.VolatileState.Role = raft_state.Leader
+					node.VolatileState.LeaderId = node.PersistentState.NodeId
 					go sendHeartbeat(node, raftNetworking, timeoutFactory)
 				}
 			} else {
