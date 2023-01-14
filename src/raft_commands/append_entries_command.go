@@ -1,7 +1,7 @@
 package raft_commands
 
 import (
-	"github.com/mblichar/raft/src/raft_state"
+	"github.com/mblichar/raft-playground/src/raft_state"
 )
 
 // AppendEntriesCommand is sent by leader to replicate log entries, also used as heartbeat

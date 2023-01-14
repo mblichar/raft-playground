@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/mblichar/raft/src/timer"
+	"github.com/mblichar/raft-playground/src/timer"
 	"sync"
 	"time"
 )

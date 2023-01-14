@@ -1,11 +1,11 @@
 package node
 
 import (
-	"github.com/mblichar/raft/src/config"
-	"github.com/mblichar/raft/src/raft_commands"
-	"github.com/mblichar/raft/src/raft_networking"
-	"github.com/mblichar/raft/src/raft_state"
-	"github.com/mblichar/raft/src/timer"
+	"github.com/mblichar/raft-playground/src/config"
+	"github.com/mblichar/raft-playground/src/raft_commands"
+	"github.com/mblichar/raft-playground/src/raft_networking"
+	"github.com/mblichar/raft-playground/src/raft_state"
+	"github.com/mblichar/raft-playground/src/timer"
 )
 
 type electionResult struct {

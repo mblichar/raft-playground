@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/mblichar/raft/src/cli"
-	"github.com/mblichar/raft/src/config"
+	"github.com/mblichar/raft-playground/src/cli"
+	"github.com/mblichar/raft-playground/src/config"
 )
 
 func main() {

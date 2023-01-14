@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
-	"github.com/mblichar/raft/src/config"
-	"github.com/mblichar/raft/src/logging"
-	"github.com/mblichar/raft/src/node"
+	"github.com/mblichar/raft-playground/src/config"
+	"github.com/mblichar/raft-playground/src/logging"
+	"github.com/mblichar/raft-playground/src/node"
 	"github.com/rivo/tview"
 	"time"
 )

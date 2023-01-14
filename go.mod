@@ -1,4 +1,4 @@
-module github.com/mblichar/raft
+module github.com/mblichar/raft-playground
 
 go 1.19
 

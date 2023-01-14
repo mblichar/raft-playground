@@ -2,10 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/mblichar/raft/src/config"
-	"github.com/mblichar/raft/src/logging"
-	"github.com/mblichar/raft/src/node"
-	"github.com/mblichar/raft/src/raft_state"
+	"github.com/mblichar/raft-playground/src/config"
+	"github.com/mblichar/raft-playground/src/logging"
+	"github.com/mblichar/raft-playground/src/node"
+	"github.com/mblichar/raft-playground/src/raft_state"
 	"github.com/rivo/tview"
 	"sort"
 	"strings"

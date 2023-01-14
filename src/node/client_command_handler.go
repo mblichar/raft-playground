@@ -2,12 +2,12 @@ package node
 
 import (
 	"fmt"
-	"github.com/mblichar/raft/src/client_networking"
-	"github.com/mblichar/raft/src/config"
-	"github.com/mblichar/raft/src/raft_commands"
-	"github.com/mblichar/raft/src/raft_networking"
-	"github.com/mblichar/raft/src/raft_state"
-	"github.com/mblichar/raft/src/timer"
+	"github.com/mblichar/raft-playground/src/client_networking"
+	"github.com/mblichar/raft-playground/src/config"
+	"github.com/mblichar/raft-playground/src/raft_commands"
+	"github.com/mblichar/raft-playground/src/raft_networking"
+	"github.com/mblichar/raft-playground/src/raft_state"
+	"github.com/mblichar/raft-playground/src/timer"
 )
 
 func handleClientCommand(

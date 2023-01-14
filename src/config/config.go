@@ -9,7 +9,7 @@ type config struct {
 	RetryTimeout int
 	// Network latency in milliseconds
 	NetworkLatency int
-	// Array of raft nodes ids
+	// Array of raft-playground nodes ids
 	NodeIds []uint
 }
 

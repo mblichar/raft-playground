@@ -1,6 +1,6 @@
 package raft_networking
 
-import "github.com/mblichar/raft/src/raft_commands"
+import "github.com/mblichar/raft-playground/src/raft_commands"
 
 type CommandWrapper struct {
 	Command raft_commands.RaftCommand

@@ -2,8 +2,8 @@ package node
 
 import (
 	"fmt"
-	"github.com/mblichar/raft/src/raft_commands"
-	"github.com/mblichar/raft/src/raft_state"
+	"github.com/mblichar/raft-playground/src/raft_commands"
+	"github.com/mblichar/raft-playground/src/raft_state"
 )
 
 func handleRaftCommand(node *Node, command raft_commands.RaftCommand) raft_commands.RaftCommandResult {

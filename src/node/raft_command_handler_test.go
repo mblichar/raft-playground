@@ -2,8 +2,8 @@ package node
 
 import (
 	"github.com/go-test/deep"
-	"github.com/mblichar/raft/src/raft_commands"
-	"github.com/mblichar/raft/src/raft_state"
+	"github.com/mblichar/raft-playground/src/raft_commands"
+	"github.com/mblichar/raft-playground/src/raft_state"
 	"testing"
 )
 

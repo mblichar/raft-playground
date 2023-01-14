@@ -2,9 +2,9 @@ package node
 
 import (
 	"fmt"
-	"github.com/mblichar/raft/src/raft_commands"
-	"github.com/mblichar/raft/src/raft_networking"
-	"github.com/mblichar/raft/src/timer"
+	"github.com/mblichar/raft-playground/src/raft_commands"
+	"github.com/mblichar/raft-playground/src/raft_networking"
+	"github.com/mblichar/raft-playground/src/timer"
 	"sync"
 )
 
